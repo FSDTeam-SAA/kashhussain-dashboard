@@ -1,10 +1,10 @@
 "use client";
 
-import React, { KeyboardEvent, useMemo, useState } from "react";
-import { Plus, Sparkles, X } from "lucide-react";
+import React, { KeyboardEvent, useEffect, useState } from "react";
+import { Plus, X, Loader2, CircleCheckBig } from "lucide-react";
 import { toast } from "sonner";
-
-import { Badge } from "@/components/ui/badge";
+import { useSession } from "next-auth/react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -15,14 +15,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { SubscribePlan } from "./manage-plan-data-type";
+
+interface AddEditPlanFormModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  editPlan?: SubscribePlan | null;
+}
 
 const AddEditPlanFormModal = ({
   open,
   onOpenChange,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) => {
+  editPlan,
+}: AddEditPlanFormModalProps) => {
+  const isEditMode = !!editPlan;
+
   const [planName, setPlanName] = useState("");
   const [price, setPrice] = useState("");
   const [featureInput, setFeatureInput] = useState("");
@@ -33,15 +40,19 @@ const AddEditPlanFormModal = ({
     keyFeatures?: string;
   }>({});
 
-  const normalizedPrice = useMemo(() => {
-    const parsedPrice = Number.parseFloat(price);
+  const { data: session } = useSession();
+  const token = (session?.user as { accessToken?: string })?.accessToken;
+  const queryClient = useQueryClient();
 
-    if (Number.isNaN(parsedPrice)) {
-      return "";
+  // Pre-fill form when editing
+  useEffect(() => {
+    if (editPlan) {
+      setPlanName(editPlan.planName || "");
+      setPrice(editPlan.price?.toString() || "");
+      setKeyFeatures(editPlan.features || []);
     }
+  }, [editPlan]);
 
-    return parsedPrice.toFixed(2);
-  }, [price]);
 
   const resetForm = () => {
     setPlanName("");
@@ -63,6 +74,11 @@ const AddEditPlanFormModal = ({
     const trimmedFeature = featureInput.trim();
 
     if (!trimmedFeature) {
+      return;
+    }
+
+    if (keyFeatures.length >= 10) {
+      toast.error("Maximum 10 features allowed");
       return;
     }
 
@@ -92,6 +108,84 @@ const AddEditPlanFormModal = ({
       prev.filter((feature) => feature !== featureToRemove),
     );
   };
+
+  // Create plan mutation (POST)
+  const { mutate: createPlan, isPending: isCreating } = useMutation({
+    mutationKey: ["create-plan"],
+    mutationFn: async (payload: {
+      planName: string;
+      price: string;
+      features: string[];
+    }) => {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/subscribe`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        },
+      );
+
+      return res.json();
+    },
+    onSuccess: (response) => {
+      if (!response?.success) {
+        toast.error(response?.message || "Something went wrong");
+        return;
+      }
+
+      toast.success(response?.message || "Plan created successfully");
+      queryClient.invalidateQueries({ queryKey: ["manage-plans"] });
+      handleDialogChange(false);
+    },
+    onError: () => {
+      toast.error("Failed to create plan");
+    },
+  });
+
+  // Update plan mutation (PATCH)
+  const { mutate: updatePlan, isPending: isUpdating } = useMutation({
+    mutationKey: ["update-plan"],
+    mutationFn: async (payload: {
+      id: string;
+      planName: string;
+      price: string;
+      features: string[];
+    }) => {
+      const { id, ...body } = payload;
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/subscribe/${id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(body),
+        },
+      );
+
+      return res.json();
+    },
+    onSuccess: (response) => {
+      if (!response?.success) {
+        toast.error(response?.message || "Something went wrong");
+        return;
+      }
+
+      toast.success(response?.message || "Plan updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["manage-plans"] });
+      handleDialogChange(false);
+    },
+    onError: () => {
+      toast.error("Failed to update plan");
+    },
+  });
+
+  const isSubmitting = isCreating || isUpdating;
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -125,8 +219,17 @@ const AddEditPlanFormModal = ({
       return;
     }
 
-    toast.success("Plan details are ready to save");
-    handleDialogChange(false);
+    const payload = {
+      planName: planName.trim(),
+      price: price,
+      features: keyFeatures,
+    };
+
+    if (isEditMode && editPlan) {
+      updatePlan({ id: editPlan._id, ...payload });
+    } else {
+      createPlan(payload);
+    }
   };
 
   return (
@@ -134,24 +237,22 @@ const AddEditPlanFormModal = ({
       <DialogContent className="max-w-[560px] overflow-hidden border-0 bg-white p-0 shadow-[0_24px_80px_rgba(15,23,42,0.18)] !rounded-[20px]">
         <div className="bg-gradient-to-r from-[#EFF5FF] via-white to-[#F3FBF7] px-6 pb-4 pt-6 sm:px-7">
           <DialogHeader className="space-y-2 text-left">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#2747A1] text-white shadow-sm">
-              <Sparkles className="h-5 w-5" />
-            </div>
             <DialogTitle className="text-2xl font-semibold text-[#111827]">
-              Create plan
+              {isEditMode ? "Edit plan" : "Create plan"}
             </DialogTitle>
             <DialogDescription className="text-sm leading-6 text-[#6B7280]">
-              Add a plan name, set the price, and build the feature list one by
-              one.
+              {isEditMode
+                ? "Update the plan name, price, and feature list."
+                : "Add a plan name, set the price, and build the feature list one by one."}
             </DialogDescription>
           </DialogHeader>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5 px-6 pb-6 sm:px-7">
+        <form onSubmit={handleSubmit} className="space-y-2 px-6 pb-6 sm:px-7">
           <div className="space-y-2">
             <label
               htmlFor="plan-name"
-              className="text-sm font-medium text-[#374151]"
+              className="text-base font-semibold text-[#313131] leading-normal"
             >
               Plan name
             </label>
@@ -179,15 +280,10 @@ const AddEditPlanFormModal = ({
             <div className="flex items-center justify-between gap-3">
               <label
                 htmlFor="plan-price"
-                className="text-sm font-medium text-[#374151]"
+                className="text-base font-semibold text-[#313131] leading-normal"
               >
                 Price
               </label>
-              {normalizedPrice && (
-                <span className="text-xs font-medium text-[#6B7280]">
-                  Preview: ${normalizedPrice}
-                </span>
-              )}
             </div>
             <div className="relative">
               <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-[#6B7280]">
@@ -222,7 +318,7 @@ const AddEditPlanFormModal = ({
               <div>
                 <label
                   htmlFor="feature-input"
-                  className="text-sm font-medium text-[#374151]"
+                  className="text-base font-semibold text-[#313131] leading-normal"
                 >
                   Key features
                 </label>
@@ -232,7 +328,7 @@ const AddEditPlanFormModal = ({
                 </p>
               </div>
               <div className="rounded-full bg-[#EEF4FF] px-3 py-1 text-xs font-semibold text-[#2747A1]">
-                {keyFeatures.length} added
+                {keyFeatures.length}/10 added
               </div>
             </div>
 
@@ -264,27 +360,31 @@ const AddEditPlanFormModal = ({
               <p className="text-sm text-red-500">{errors.keyFeatures}</p>
             )}
 
-            <div className="min-h-24 rounded-2xl border border-dashed border-[#D6DDE8] bg-[#F8FAFC] p-3">
-              {keyFeatures.length ? (
-                <div className="flex flex-wrap gap-2">
-                  {keyFeatures.map((feature) => (
-                    <Badge
+            <div className="max-h-[160px] overflow-y-auto rounded-2xl border border-dashed border-[#D6DDE8] bg-[#F8FAFC] p-4">
+              {keyFeatures?.length ? (
+                <ul className="space-y-2">
+                  {keyFeatures?.map((feature) => (
+                    <li
                       key={feature}
-                      variant="outline"
-                      className="rounded-full border-[#D7E3FF] bg-white px-3 py-2 text-sm font-medium text-[#1F2937]"
+                      className="group flex items-center justify-between gap-3"
                     >
-                      <span>{feature}</span>
+                      <div className="flex items-center gap-3">
+                        <CircleCheckBig className="h-5 w-5 shrink-0 text-[#16A34A]" />
+                        <span className="text-[15px] font-medium text-[#374151]">
+                          {feature}
+                        </span>
+                      </div>
                       <button
                         type="button"
                         onClick={() => removeFeature(feature)}
-                        className="ml-2 rounded-full p-0.5 text-[#6B7280] transition hover:bg-[#F3F4F6] hover:text-red-500"
+                        className="rounded-full p-1 text-[#9CA3AF] opacity-0 transition-opacity group-hover:opacity-100 hover:bg-[#FEE2E2] hover:text-red-500"
                         aria-label={`Remove ${feature}`}
                       >
-                        <X className="h-3.5 w-3.5" />
+                        <X className="h-4 w-4" />
                       </button>
-                    </Badge>
+                    </li>
                   ))}
-                </div>
+                </ul>
               ) : (
                 <div className="flex h-full min-h-[72px] items-center justify-center rounded-xl border border-dashed border-transparent text-center text-sm text-[#9CA3AF]">
                   Your added features will appear here.
@@ -297,6 +397,7 @@ const AddEditPlanFormModal = ({
             <Button
               type="button"
               variant="outline"
+              disabled={isSubmitting}
               onClick={() => handleDialogChange(false)}
               className="h-12 rounded-2xl border-[#F3D2D2] bg-[#FFF1F1] text-base font-medium text-[#EF4444] hover:bg-[#FFE4E4] hover:text-[#DC2626]"
             >
@@ -304,9 +405,13 @@ const AddEditPlanFormModal = ({
             </Button>
             <Button
               type="submit"
+              disabled={isSubmitting}
               className="h-12 rounded-2xl bg-[#E9F8EF] text-base font-medium text-[#16A34A] hover:bg-[#D7F3E1]"
             >
-              Save plan
+              {isSubmitting && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              {isEditMode ? "Update plan" : "Save plan"}
             </Button>
           </div>
         </form>

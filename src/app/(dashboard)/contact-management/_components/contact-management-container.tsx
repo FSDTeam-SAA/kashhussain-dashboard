@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Trash2, Eye, Search, SlidersHorizontal } from "lucide-react";
+import { Trash2, Eye, Search } from "lucide-react";
 import { toast } from "sonner";
 
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,6 @@ import DeleteModal from "@/components/modals/delete-modal";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Contact, ContactsApiResponse } from "./contact-data-type";
 import ContactManagementView from "./contact-management-view";
-import { Button } from "@/components/ui/button";
 
 export default function ContactUsContainer() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -34,7 +33,7 @@ export default function ContactUsContainer() {
     queryKey: ["contacts", debouncedSearch, currentPage],
     queryFn: async () => {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/contact?page=${currentPage}&limit=4&search=${debouncedSearch}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/contact?page=${currentPage}&limit=4&searchTerm=${debouncedSearch}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -110,14 +109,6 @@ export default function ContactUsContainer() {
               className="h-11 rounded-xl border-[#C9D4E5] bg-white pl-10 pr-4 text-sm text-[#111827] placeholder:text-[#6B7280] focus-visible:ring-1 focus-visible:ring-[#2747A1]"
             />
           </div>
-
-          <Button
-            type="button"
-            className="h-11 rounded-xl bg-[#2747A1] px-4 text-sm font-medium text-white hover:bg-[#1f3b8f]"
-          >
-            <SlidersHorizontal className="mr-2 h-4 w-4" />
-            Short By
-          </Button>
         </div>
 
         {/* table */}

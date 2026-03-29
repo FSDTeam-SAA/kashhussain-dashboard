@@ -12,13 +12,10 @@ import DeleteModal from "@/components/modals/delete-modal";
 import { useDebounce } from "@/hooks/useDebounce";
 
 import { Button } from "@/components/ui/button";
-import {
-  Contact,
-  ContactsApiResponse,
-} from "../../contact-management/_components/contact-data-type";
-import ContactManagementView from "../../contact-management/_components/contact-management-view";
 import moment from "moment";
 import AddEditPlanFormModal from "./add-edit-plan-form";
+import { SubscribeApiResponse, SubscribePlan } from "./manage-plan-data-type";
+import ManagePlanView from "./manage-plan-view";
 
 export default function ManagePlanContainer() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -26,8 +23,10 @@ export default function ManagePlanContainer() {
 
   const [addEditModalOpen, setAddEditModalOpen] = useState(false);
 
-  const [selectViewContact, setSelectViewContact] = useState(false);
-  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [selectViewPlan, setSelectViewPlan] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<SubscribePlan | null>(
+    null,
+  );
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedId, setSelectedId] = useState("");
@@ -38,11 +37,11 @@ export default function ManagePlanContainer() {
   const { data: session } = useSession();
   const token = (session?.user as { accessToken?: string })?.accessToken;
 
-  const { data, isLoading, isError } = useQuery<ContactsApiResponse>({
-    queryKey: ["contacts", debouncedSearch, currentPage],
+  const { data, isLoading, isError } = useQuery<SubscribeApiResponse>({
+    queryKey: ["manage-plans", debouncedSearch, currentPage],
     queryFn: async () => {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/contact?page=${currentPage}&limit=4&search=${debouncedSearch}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/subscribe?page=${currentPage}&limit=4&searchTerm=${debouncedSearch}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -59,16 +58,18 @@ export default function ManagePlanContainer() {
     enabled: !!token,
   });
 
-  const contacts = data?.data ?? [];
-  const totalPages = data?.meta
-    ? Math.ceil(data.meta.total / data.meta.limit)
+  const allPlans = data?.data?.data ?? [];
+
+
+  const totalPages = data?.data?.meta
+    ? Math.ceil(data?.data?.meta?.total / data?.data?.meta?.limit)
     : 0;
 
   const { mutate } = useMutation({
-    mutationKey: ["delete-contact"],
+    mutationKey: ["delete-plan"],
     mutationFn: async (id: string) => {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/contact/${id}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/subscribe/${id}`,
         {
           method: "DELETE",
           headers: {
@@ -85,11 +86,11 @@ export default function ManagePlanContainer() {
         return;
       }
 
-      toast.success(response?.message || "Contact deleted successfully");
-      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      toast.success(response?.message || "Plan deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["manage-plans"] });
     },
     onError: () => {
-      toast.error("Failed to delete contact");
+      toast.error("Failed to delete Plan");
     },
   });
 
@@ -122,6 +123,7 @@ export default function ManagePlanContainer() {
           <Button
             type="button"
             onClick={() => {
+              setSelectedPlan(null);
               setAddEditModalOpen(true);
             }}
             className="h-11 rounded-xl bg-primary px-4 text-base font-medium text-white leading-normal"
@@ -178,17 +180,17 @@ export default function ManagePlanContainer() {
                     colSpan={4}
                     className="py-12 text-center text-sm text-red-500"
                   >
-                    Failed to load contacts.
+                    Failed to load plans.
                   </td>
                 </tr>
-              ) : contacts.length ? (
-                contacts.map((contact) => (
+              ) : allPlans?.length ? (
+                allPlans?.map((contact) => (
                   <tr
                     key={contact._id}
                     className="border-t-[1.5px] border-white transition-colors hover:bg-[#F1F6FD]"
                   >
                     <td className="px-6 py-4 text-base font-medium text-[#343A40] leading-normal">
-                      {contact.fullName || "N/A"}
+                      {contact.planName || "N/A"}
                     </td>
 
                     <td className="px-6 py-4 text-base font-medium text-[#343A40] leading-normal">
@@ -198,7 +200,7 @@ export default function ManagePlanContainer() {
                     </td>
 
                     <td className="px-6 py-4 text-base font-medium text-[#343A40] leading-normal">
-                      $ {"N/A"}
+                      $ {contact.price?.toFixed(2) || "N/A"}
                     </td>
 
                     <td className="px-6 py-4">
@@ -207,6 +209,7 @@ export default function ManagePlanContainer() {
                           type="button"
                           className="text-[#111827] transition hover:scale-105 hover:text-[#2747A1]"
                           onClick={() => {
+                            setSelectedPlan(contact);
                             setAddEditModalOpen(true);
                           }}
                         >
@@ -216,8 +219,8 @@ export default function ManagePlanContainer() {
                           type="button"
                           className="text-[#111827] transition hover:scale-105 hover:text-[#2747A1]"
                           onClick={() => {
-                            setSelectViewContact(true);
-                            setSelectedContact(contact);
+                            setSelectViewPlan(true);
+                            setSelectedPlan(contact);
                           }}
                         >
                           <Eye className="h-6 w-6 text-black" />
@@ -243,7 +246,7 @@ export default function ManagePlanContainer() {
                     colSpan={4}
                     className="py-12 text-center text-sm text-[#6B7280]"
                   >
-                    No contacts found.
+                    No plans found.
                   </td>
                 </tr>
               )}
@@ -278,16 +281,16 @@ export default function ManagePlanContainer() {
             onClose={() => setDeleteModalOpen(false)}
             onConfirm={handleDelete}
             title="Are You Sure?"
-            desc="Are you sure you want to delete this Contact?"
+            desc="Are you sure you want to delete this Plan?"
           />
         )}
 
         {/* view modal */}
-        {selectViewContact && (
-          <ContactManagementView
-            open={selectViewContact}
-            onOpenChange={(open: boolean) => setSelectViewContact(open)}
-            contactData={selectedContact}
+        {selectViewPlan && (
+          <ManagePlanView
+            open={selectViewPlan}
+            onOpenChange={(open: boolean) => setSelectViewPlan(open)}
+            planData={selectedPlan}
           />
         )}
 
@@ -295,7 +298,11 @@ export default function ManagePlanContainer() {
         {addEditModalOpen && (
           <AddEditPlanFormModal
             open={addEditModalOpen}
-            onOpenChange={setAddEditModalOpen}
+            onOpenChange={(open) => {
+              setAddEditModalOpen(open);
+              if (!open) setSelectedPlan(null);
+            }}
+            editPlan={selectedPlan}
           />
         )}
       </div>
