@@ -4,30 +4,18 @@ import { useQuery } from "@tanstack/react-query";
 import DashboardOverviewSkeleton from "./dashboard-overview-skeleton";
 import ErrorContainer from "@/components/shared/ErrorContainer/ErrorContainer";
 import { useSession } from "next-auth/react";
-
-export interface DashboardOverviewApiResponse {
-  status: boolean;
-  message: string;
-  data: DashboardStats;
-}
-
-export interface DashboardStats {
-  totalRevenue: number;
-  totalProducts: number;
-  totalOrders: number;
-  totalCustomers: number;
-}
+import { DashboardOverviewsApiResponse } from "./dashboard-overview-data-type";
 
 export function DashboardOverview() {
   const session = useSession();
   const token = (session?.data?.user as { accessToken: string })?.accessToken;
 
   const { data, isLoading, isError, error } =
-    useQuery<DashboardOverviewApiResponse>({
+    useQuery<DashboardOverviewsApiResponse>({
       queryKey: ["dashboard-overview"],
       queryFn: async () => {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/dashboard/stats`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/dashboard/overview`,
           {
             method: "GET",
             headers: {
@@ -40,7 +28,7 @@ export function DashboardOverview() {
       enabled: !!token,
     });
 
-  console.log(data);
+  
 
   let content;
 
@@ -65,7 +53,7 @@ export function DashboardOverview() {
               Total Users
             </p>
             <p className="text-3xl leading-[120%] text-primary font-bold font-hexco pt-2">
-              {data?.data?.totalRevenue?.toFixed(2) || 0}
+              {data?.data?.totalUser || 0}
             </p>
           </div>
           <div>
@@ -81,7 +69,7 @@ export function DashboardOverview() {
               Total Earning
             </p>
             <p className="text-3xl leading-[120%] text-primary font-bold font-hexco pt-2">
-              ${data?.data?.totalProducts || 0}
+              ${data?.data?.totalEarning?.toFixed(2) || 0}
             </p>
           </div>
           <div>
@@ -97,7 +85,7 @@ export function DashboardOverview() {
               Total Report Genarate
             </p>
             <p className="text-3xl leading-[120%] text-primary font-bold font-hexco pt-2">
-              {data?.data?.totalOrders || 0}
+              {data?.data?.suspended || 0}
             </p>
           </div>
           <div>

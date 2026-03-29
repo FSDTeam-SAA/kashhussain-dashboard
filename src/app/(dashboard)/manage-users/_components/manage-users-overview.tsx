@@ -30,7 +30,6 @@ export function ManageUsersOverview() {
       enabled: !!token,
     });
 
-  console.log(data);
 
   let content;
 

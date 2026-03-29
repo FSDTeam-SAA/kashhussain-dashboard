@@ -19,8 +19,8 @@ export default function PaymentAndTransactionsContainer() {
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState("");
 
-  const [selectViewContact, setSelectViewContact] = useState(false);
-  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [selectViewPayment, setSelectViewPayment] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<Contact | null>(null);
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedId, setSelectedId] = useState("");
@@ -32,10 +32,10 @@ export default function PaymentAndTransactionsContainer() {
   const token = (session?.user as { accessToken?: string })?.accessToken;
 
   const { data, isLoading, isError } = useQuery<ContactsApiResponse>({
-    queryKey: ["contacts", debouncedSearch, currentPage],
+    queryKey: ["all-payments", debouncedSearch, currentPage],
     queryFn: async () => {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/contact?page=${currentPage}&limit=4&search=${debouncedSearch}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/contact?page=${currentPage}&limit=10&searchTerm=${debouncedSearch}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -44,7 +44,7 @@ export default function PaymentAndTransactionsContainer() {
       );
 
       if (!res.ok) {
-        throw new Error("Failed to fetch contacts");
+        throw new Error("Failed to fetch Payments");
       }
 
       return res.json();
@@ -58,7 +58,7 @@ export default function PaymentAndTransactionsContainer() {
     : 0;
 
   const { mutate } = useMutation({
-    mutationKey: ["delete-contact"],
+    mutationKey: ["delete-payment"],
     mutationFn: async (id: string) => {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/contact/${id}`,
@@ -78,11 +78,11 @@ export default function PaymentAndTransactionsContainer() {
         return;
       }
 
-      toast.success(response?.message || "Contact deleted successfully");
-      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      toast.success(response?.message || "Payment deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["all-payments"] });
     },
     onError: () => {
-      toast.error("Failed to delete contact");
+      toast.error("Failed to delete payment");
     },
   });
 
@@ -197,8 +197,8 @@ export default function PaymentAndTransactionsContainer() {
                           type="button"
                           className="text-[#111827] transition hover:scale-105 hover:text-[#2747A1]"
                           onClick={() => {
-                            setSelectViewContact(true);
-                            setSelectedContact(contact);
+                            setSelectViewPayment(true);
+                            setSelectedPayment(contact);
                           }}
                         >
                           <Eye className="h-6 w-6 text-black" />
@@ -259,16 +259,16 @@ export default function PaymentAndTransactionsContainer() {
             onClose={() => setDeleteModalOpen(false)}
             onConfirm={handleDelete}
             title="Are You Sure?"
-            desc="Are you sure you want to delete this Contact?"
+            desc="Are you sure you want to delete this Payment?"
           />
         )}
 
         {/* view modal */}
-        {selectViewContact && (
+        {selectViewPayment && (
           <ContactManagementView
-            open={selectViewContact}
-            onOpenChange={(open: boolean) => setSelectViewContact(open)}
-            contactData={selectedContact}
+            open={selectViewPayment}
+            onOpenChange={(open: boolean) => setSelectViewPayment(open)}
+            contactData={selectedPayment}
           />
         )}
       </div>
