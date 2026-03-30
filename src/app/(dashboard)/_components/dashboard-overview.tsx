@@ -1,5 +1,5 @@
 "use client";
-import { DollarSign, ShoppingCart, Users } from "lucide-react";
+import { DollarSign, Sparkles, Users } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import DashboardOverviewSkeleton from "./dashboard-overview-skeleton";
 import ErrorContainer from "@/components/shared/ErrorContainer/ErrorContainer";
@@ -27,6 +27,8 @@ export function DashboardOverview() {
       },
       enabled: !!token,
     });
+
+    console.log("Dashboard Overview Data:", data);
 
   
 
@@ -57,7 +59,7 @@ export function DashboardOverview() {
             </p>
           </div>
           <div>
-            <span className="flex items-center justify-center bg-[#E6F4E6] p-3 rounded-full">
+            <span className="flex items-center justify-center bg-[#F7F7FE] p-3 rounded-full">
               <Users className="w-6 h-6 text-primary" />
             </span>
           </div>
@@ -73,7 +75,7 @@ export function DashboardOverview() {
             </p>
           </div>
           <div>
-            <span className="flex items-center justify-center bg-[#E6F4E6] p-3 rounded-full">
+            <span className="flex items-center justify-center bg-[#F7F7FE] p-3 rounded-full">
               <DollarSign className="w-6 h-6 text-primary" />
             </span>
           </div>
@@ -85,12 +87,12 @@ export function DashboardOverview() {
               Total Report Genarate
             </p>
             <p className="text-3xl leading-[120%] text-primary font-bold font-hexco pt-2">
-              {data?.data?.suspended || 0}
+              {data?.data?.generateReport || 0}
             </p>
           </div>
           <div>
-            <span className="flex items-center justify-center bg-[#E6F4E6] p-3 rounded-full">
-              <ShoppingCart className="w-6 h-6 text-primary" />
+            <span className="flex items-center justify-center bg-[#F7F7FE] p-3 rounded-full">
+              <Sparkles  className="w-6 h-6 text-primary" />
             </span>
           </div>
         </div>

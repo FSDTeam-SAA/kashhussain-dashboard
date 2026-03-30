@@ -102,7 +102,7 @@ export default function ManagePlanContainer() {
   };
 
   return (
-    <div className="px-2 py-4 sm:px-4 md:px-6">
+    <div className="p-6">
       <div className="rounded-2xl border border-[#E4EAF3] bg-white p-3 shadow-sm sm:p-4 md:p-5">
         {/* top bar */}
         <div className="mb-4 flex flex-col gap-3 md:mb-5 md:flex-row md:items-center md:justify-between">

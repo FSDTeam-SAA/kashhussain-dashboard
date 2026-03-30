@@ -1,11 +1,9 @@
-
-
-
 export interface DashboardData {
   totalUser: number;
   activeUser: number;
   suspended: number;
   totalEarning: number;
+  generateReport: number;
 }
 
 export interface DashboardOverviewsApiResponse {

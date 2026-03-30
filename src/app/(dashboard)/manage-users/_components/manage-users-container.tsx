@@ -81,7 +81,7 @@ export default function ManageUserscontainer() {
     : 0;
   const statusFilterLabel =
     statusFilter === "all"
-      ? "Filter By"
+      ? "Short By"
       : statusFilter === "active"
         ? "Active"
         : "Suspended";
