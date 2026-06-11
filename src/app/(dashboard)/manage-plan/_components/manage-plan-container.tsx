@@ -200,7 +200,7 @@ export default function ManagePlanContainer() {
                     </td>
 
                     <td className="px-6 py-4 text-base font-medium text-[#343A40] leading-normal">
-                      $ {contact.price?.toFixed(2) || "N/A"}
+                      £ {contact.price?.toFixed(2) || "N/A"}
                     </td>
 
                     <td className="px-6 py-4">

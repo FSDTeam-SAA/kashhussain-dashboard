@@ -51,7 +51,7 @@ export function PaymentOverview() {
               Total Earning
             </p>
             <p className="text-3xl leading-[120%] text-primary font-bold font-hexco pt-2">
-              ${data?.data?.totalEarning?.toFixed(2) || 0}
+              £{data?.data?.totalEarning?.toFixed(2) || 0}
             </p>
           </div>
           <div>

@@ -261,7 +261,7 @@ export default function PaymentAndTransactionsContainer() {
                     </td>
 
                     <td className="px-6 py-4 text-base font-medium text-[#343A40] leading-normal">
-                      {payment?.amount ? `$${payment.amount}` : "N/A"}
+                      {payment?.amount ? `£${payment.amount}` : "N/A"}
                     </td>
 
                     <td className="px-6 py-4 text-base font-medium text-[#343A40] leading-normal">

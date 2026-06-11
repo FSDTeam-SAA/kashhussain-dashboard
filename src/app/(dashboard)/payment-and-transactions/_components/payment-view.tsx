@@ -32,7 +32,7 @@ const PaymentView = ({ open, onOpenChange, paymentData }: PaymentViewProps) => {
             <div className="flex flex-col gap-1">
               <span className="text-sm font-medium text-[#6B7280]">Amount</span>
               <span className="text-3xl font-bold text-[#111827]">
-                ${paymentData.amount?.toFixed(2) || "0.00"}
+                £{paymentData.amount?.toFixed(2) || "0.00"}
               </span>
             </div>
             {/* Status Badge */}

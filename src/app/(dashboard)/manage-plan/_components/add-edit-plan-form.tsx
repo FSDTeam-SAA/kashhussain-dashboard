@@ -287,7 +287,7 @@ const AddEditPlanFormModal = ({
             </div>
             <div className="relative">
               <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-[#6B7280]">
-                $
+                £
               </span>
               <Input
                 id="plan-price"

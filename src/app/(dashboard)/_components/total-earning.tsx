@@ -92,7 +92,7 @@ export function TotalEarningChart() {
           {label} {selectedYear}
         </p>
         <p className="text-sm font-semibold text-[#1D4ED8]">
-          ${payload[0].value.toFixed(2)}
+          £{payload[0].value.toFixed(2)}
         </p>
       </div>
     );
@@ -172,7 +172,7 @@ export function TotalEarningChart() {
                     tickLine={false}
                     axisLine={false}
                     tick={{ fill: "#9CA3AF", fontSize: 12 }}
-                    tickFormatter={(val) => `$${val}`}
+                    tickFormatter={(val) => `£${val}`}
                   />
 
                   <Tooltip

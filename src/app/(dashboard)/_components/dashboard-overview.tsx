@@ -1,5 +1,5 @@
 "use client";
-import { DollarSign, Sparkles, Users } from "lucide-react";
+import { PoundSterling, Sparkles, Users } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import DashboardOverviewSkeleton from "./dashboard-overview-skeleton";
 import ErrorContainer from "@/components/shared/ErrorContainer/ErrorContainer";
@@ -71,12 +71,12 @@ export function DashboardOverview() {
               Total Earning
             </p>
             <p className="text-3xl leading-[120%] text-primary font-bold font-hexco pt-2">
-              ${data?.data?.totalEarning?.toFixed(2) || 0}
+              £{data?.data?.totalEarning?.toFixed(2) || 0}
             </p>
           </div>
           <div>
             <span className="flex items-center justify-center bg-[#F7F7FE] p-3 rounded-full">
-              <DollarSign className="w-6 h-6 text-primary" />
+              <PoundSterling  className="w-6 h-6 text-primary" />
             </span>
           </div>
         </div>
